@@ -26,7 +26,7 @@ namespace Vperyod\SessionHandler;
  * @package  Vperyod\SessionHandler
  * @author   Jake Johns <jake@jakejohns.net>
  * @license  http://jnj.mit-license.org/2016 MIT License
- * @link     https://github.com/vperyod/vperyod.molniya
+ * @link     https://github.com/vperyod/vperyod.session-handler
  */
 class Exception extends \Exception
 {

@@ -13,4 +13,9 @@ class FakeSessionRequestAware
     {
         return $this->getSession($request);
     }
+
+    public function proxyGetCsrfSpec($request)
+    {
+        return $this->getCsrfSpec($request);
+    }
 }

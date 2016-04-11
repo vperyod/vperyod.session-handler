@@ -48,6 +48,24 @@ trait SessionRequestAwareTrait
     protected $sessionAttribute = 'aura/session:session';
 
     /**
+     * CsrfName
+     *
+     * @var string
+     *
+     * @access protected
+     */
+    protected $csrfName = '__csrf_token';
+
+    /**
+     * CsrfHeader
+     *
+     * @var string
+     *
+     * @access protected
+     */
+    protected $csrfHeader = 'X-Csrf-Token';
+
+    /**
      * Set session attribute
      *
      * @param string $attr name of attribute for session
@@ -60,6 +78,60 @@ trait SessionRequestAwareTrait
     {
         $this->sessionAttribute = $attr;
         return $this;
+    }
+
+    /**
+     * SetCsrfName
+     *
+     * @param mixed $name DESCRIPTION
+     *
+     * @return mixed
+     *
+     * @access public
+     */
+    public function setCsrfName($name)
+    {
+        $this->csrfName = $name;
+        return $this;
+    }
+
+    /**
+     * GetCsrfName
+     *
+     * @return mixed
+     *
+     * @access public
+     */
+    public function getCsrfName()
+    {
+        return $this->csrfName;
+    }
+
+    /**
+     * SetCsrfHeader
+     *
+     * @param mixed $header DESCRIPTION
+     *
+     * @return mixed
+     *
+     * @access public
+     */
+    public function setCsrfHeader($header)
+    {
+        $this->csrfHeader = $header;
+        return $this;
+    }
+
+    /**
+     * GetCsrfHeader
+     *
+     * @return mixed
+     *
+     * @access public
+     */
+    public function getCsrfHeader()
+    {
+        return $this->csrfHeader;
     }
 
     /**
@@ -82,5 +154,27 @@ trait SessionRequestAwareTrait
             );
         }
         return $session;
+    }
+
+    /**
+     * GetCsrfSpec
+     *
+     * @param Request $request DESCRIPTION
+     *
+     * @return mixed
+     *
+     * @access protected
+     */
+    protected function getCsrfSpec(Request $request)
+    {
+        $value = $this->getSession($request)
+            ->getCsrfToken()
+            ->getValue();
+
+        return [
+            'type'  => 'hidden',
+            'name'  => $this->getCsrfName(),
+            'value' => $value,
+        ];
     }
 }
