@@ -28,7 +28,7 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
 
     public function testError()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException('Vperyod\\SessionHandler\\Exception');
 
         $req = ServerRequestFactory::fromGlobals();
 
