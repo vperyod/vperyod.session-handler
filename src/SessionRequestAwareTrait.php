@@ -76,8 +76,9 @@ trait SessionRequestAwareTrait
     {
         $session = $request->getAttribute($this->sessionAttribute);
         if (! $session instanceof Session) {
-            throw new \InvalidArgumentException(
-                'Session not available in request'
+            throw new Exception(
+                'Session not available in request at: '
+                . $this->sessionAttribute
             );
         }
         return $session;
