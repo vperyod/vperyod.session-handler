@@ -10,33 +10,89 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
 {
     protected $session;
 
-    public function testGetSession()
+    protected $request;
+
+    protected $fake;
+
+    public function setUp()
     {
-        $session = $this->getMockBuilder('Aura\Session\Session')
+        $this->fake = new Fake\FakeSessionRequestAware;
+    }
+
+    public function mockSession()
+    {
+        $this->session = $this->getMockBuilder('Aura\Session\Session')
             ->disableOriginalConstructor()
             ->getMock();
 
-        $req = ServerRequestFactory::fromGlobals()
-            ->withAttribute('session', $session);
+        $this->request = ServerRequestFactory::fromGlobals()
+            ->withAttribute('aura/session:session', $this->session);
+    }
 
-        $fake = new Fake\FakeSessionRequestAware;
+    public function mockSegment()
+    {
+        $this->segment = $this->getMockBuilder('Aura\Session\Segment')
+            ->disableOriginalConstructor()
+            ->getMock();
 
-        $fake->setSessionAttribute('session');
+        $this->session->expects($this->once())
+            ->method('getSegment')
+            ->with($this->equalTo('vperyod/session-handler:messages'))
+            ->will($this->returnValue($this->segment));
+    }
 
-        $this->assertSame($session, $fake->proxyGetSession($req));
+
+    public function configProvider()
+    {
+        return [
+            ['SessionAttribute', 'aura/session:session'],
+            ['CsrfName', '__csrf_token'],
+            ['CsrfHeader', 'X-Csrf-Token'],
+            ['MessageSegmentName', 'vperyod/session-handler:messages'],
+        ];
+    }
+
+    /**
+     * @dataProvider configProvider
+     */
+    public function testConfig($name, $default)
+    {
+        $get = 'get' . $name;
+        $this->assertEquals(
+            $default,
+            $this->fake->$get()
+        );
+
+        $set = 'set' . $name;
+        $this->assertSame(
+            $this->fake,
+            call_user_func([$this->fake, $set], 'foo')
+        );
+
+        $this->assertEquals(
+            'foo',
+            $this->fake->$get()
+        );
+    }
+
+    public function testGetSession()
+    {
+        $this->mockSession();
+        $this->assertSame(
+            $this->session,
+            $this->fake->getSession($this->request)
+        );
     }
 
     public function testCsrf()
     {
+        $this->mockSession();
+
         $token = $this->getMockBuilder('Aura\Session\CsrfToken')
             ->disableOriginalConstructor()
             ->getMock();
 
-        $session = $this->getMockBuilder('Aura\Session\Session')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $session->expects($this->once())
+        $this->session->expects($this->once())
             ->method('getCsrfToken')
             ->will($this->returnValue($token));
 
@@ -44,36 +100,68 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
             ->method('getValue')
             ->will($this->returnValue('csrfValue'));
 
-        $req = ServerRequestFactory::fromGlobals()
-            ->withAttribute('session', $session);
-
-        $fake = new Fake\FakeSessionRequestAware;
-
-        $fake->setSessionAttribute('session');
-
-        $this->assertSame('__csrf_token', $fake->getCsrfName());
-        $this->assertSame('X-Csrf-Token', $fake->getCsrfHeader());
-        $fake->setCsrfName('foo');
-        $this->assertSame('foo', $fake->getCsrfName());
-        $fake->setCsrfHeader('Foo');
-        $this->assertSame('Foo', $fake->getCsrfHeader());
-
         $this->assertEquals(
-            ['type' => 'hidden', 'name' => 'foo', 'value' => 'csrfValue'],
-            $fake->proxyGetCsrfSpec($req)
+            [
+                'type' => 'hidden',
+                'name' => '__csrf_token',
+                'value' => 'csrfValue'
+            ],
+            $this->fake->getCsrfSpec($this->request)
         );
-
-        $this->assertSame($session, $fake->proxyGetSession($req));
     }
 
     public function testError()
     {
         $this->setExpectedException('Vperyod\\SessionHandler\\Exception');
-
         $req = ServerRequestFactory::fromGlobals();
-
-        $fake = new Fake\FakeSessionRequestAware;
-
-        $fake->proxyGetSession($req);
+        $this->fake->getSession($req);
     }
+
+    public function testMessageSegment()
+    {
+        $this->mockSession();
+        $this->mockSegment();
+
+        $this->assertSame(
+            $this->segment,
+            $this->fake->getMessageSegment($this->request)
+        );
+    }
+
+    public function testDefaultFactory()
+    {
+        $this->mockSession();
+        $this->mockSegment();
+
+        $this->assertTrue(is_callable($this->fake->getMessengerFactory()));
+
+        $this->assertInstanceOf(
+            'Vperyod\SessionHandler\Messenger',
+            $this->fake->newMessenger($this->request)
+        );
+    }
+
+    public function testMessengerFactory()
+    {
+        $this->mockSession();
+        $this->mockSegment();
+
+        $factory = $this->getMock(\stdClass::class, ['__invoke']);
+        $factory->expects($this->once())
+            ->method('__invoke')
+            ->with($this->segment)
+            ->will($this->returnValue('foo'));
+
+        $this->assertSame(
+            $this->fake,
+            $this->fake->setMessengerFactory($factory)
+        );
+
+        $this->assertEquals(
+            'foo',
+            $this->fake->newMessenger($this->request)
+        );
+
+    }
+
 }
