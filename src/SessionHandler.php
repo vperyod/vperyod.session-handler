@@ -72,7 +72,7 @@ class SessionHandler
     public function __invoke(Request $request, Response $response, callable $next)
     {
         $request = $request->withAttribute(
-            $this->sessionAttribute,
+            $this->getSessionAttribute(),
             $this->sessionFactory->newInstance($request->getCookieParams())
         );
         return $next($request, $response);

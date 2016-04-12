@@ -23,12 +23,13 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 use Aura\Session\Session;
+use Aura\Session\SegmentInterface as Segment;
 
 /**
  * Session request aware trait
  *
  * Trait for objects which need to know where the session attribute is stored in
- * the request.
+ * the request and some helpers to interact with it.
  *
  * @category Trait
  * @package  Vperyod\SessionHandler
@@ -39,7 +40,7 @@ use Aura\Session\Session;
 trait SessionRequestAwareTrait
 {
     /**
-     * Session attribute
+     * Attribute on which to strore session object in request
      *
      * @var string
      *
@@ -48,7 +49,7 @@ trait SessionRequestAwareTrait
     protected $sessionAttribute = 'aura/session:session';
 
     /**
-     * CsrfName
+     * Name of posted CSRF token form field
      *
      * @var string
      *
@@ -57,13 +58,31 @@ trait SessionRequestAwareTrait
     protected $csrfName = '__csrf_token';
 
     /**
-     * CsrfHeader
+     * Name of request header storing CSRF token
      *
      * @var string
      *
      * @access protected
      */
     protected $csrfHeader = 'X-Csrf-Token';
+
+    /**
+     * Namespace for default message storage
+     *
+     * @var string
+     *
+     * @access protected
+     */
+    protected $messageSegmentName = 'vperyod/session-handler:messages';
+
+    /**
+     * Factory to create a messenger
+     *
+     * @var callable
+     *
+     * @access protected
+     */
+    protected $messengerFactory;
 
     /**
      * Set session attribute
@@ -81,11 +100,23 @@ trait SessionRequestAwareTrait
     }
 
     /**
-     * SetCsrfName
+     * Get name of attribute where session is stored
      *
-     * @param mixed $name DESCRIPTION
+     * @return string
      *
-     * @return mixed
+     * @access protected
+     */
+    protected function getSessionAttribute()
+    {
+        return $this->sessionAttribute;
+    }
+
+    /**
+     * Set name of form field containing CSRF token
+     *
+     * @param string $name name of CSRF form field
+     *
+     * @return $this
      *
      * @access public
      */
@@ -96,23 +127,23 @@ trait SessionRequestAwareTrait
     }
 
     /**
-     * GetCsrfName
+     * Get CSRF form field name
      *
-     * @return mixed
+     * @return string
      *
-     * @access public
+     * @access protected
      */
-    public function getCsrfName()
+    protected function getCsrfName()
     {
         return $this->csrfName;
     }
 
     /**
-     * SetCsrfHeader
+     * Set CSRF header name
      *
-     * @param mixed $header DESCRIPTION
+     * @param string $header name of header for CSRF token
      *
-     * @return mixed
+     * @return $this
      *
      * @access public
      */
@@ -123,15 +154,72 @@ trait SessionRequestAwareTrait
     }
 
     /**
-     * GetCsrfHeader
+     * Get name of header for CSRF token
      *
-     * @return mixed
+     * @return string
+     *
+     * @access protected
+     */
+    protected function getCsrfHeader()
+    {
+        return $this->csrfHeader;
+    }
+
+    /**
+     * Set namespace for default messenger storage
+     *
+     * @param string $name name of session segment
+     *
+     * @return $this
      *
      * @access public
      */
-    public function getCsrfHeader()
+    public function setMessageSegmentName($name)
     {
-        return $this->csrfHeader;
+        $this->messageSegmentName = $name;
+        return $this;
+    }
+
+    /**
+     * Get namespace for message segment
+     *
+     * @return string
+     *
+     * @access protected
+     */
+    protected function getMessageSegmentName()
+    {
+        return $this->messageSegmentName;
+    }
+
+    /**
+     * Set factory for default messenger
+     *
+     * @param callable $factory factory to create a messenger
+     *
+     * @return $this
+     *
+     * @access public
+     */
+    public function setMessengerFactory(callable $factory)
+    {
+        $this->messengerFactory = $factory;
+        return $this;
+    }
+
+    /**
+     * Get factory to create a messenger
+     *
+     * @return callable
+     *
+     * @access protected
+     */
+    protected function getMessengerFactory()
+    {
+        if (null === $this->messengerFactory) {
+            $this->messengerFactory = [$this, 'messengerFactory'];
+        }
+        return $this->messengerFactory;
     }
 
     /**
@@ -140,13 +228,13 @@ trait SessionRequestAwareTrait
      * @param Request $request PSR7 Request
      *
      * @return Session
-     * @throws InvalidArgumentException if session attribute is invalid
+     * @throws Exception if session attribute is invalid
      *
      * @access protected
      */
     protected function getSession(Request $request)
     {
-        $session = $request->getAttribute($this->sessionAttribute);
+        $session = $request->getAttribute($this->getSessionAttribute());
         if (! $session instanceof Session) {
             throw new Exception(
                 'Session not available in request at: '
@@ -157,11 +245,11 @@ trait SessionRequestAwareTrait
     }
 
     /**
-     * GetCsrfSpec
+     * Get spec for CSRF form field
      *
-     * @param Request $request DESCRIPTION
+     * @param Request $request PSR7 Request
      *
-     * @return mixed
+     * @return array
      *
      * @access protected
      */
@@ -176,5 +264,50 @@ trait SessionRequestAwareTrait
             'name'  => $this->getCsrfName(),
             'value' => $value,
         ];
+    }
+
+    /**
+     * Get session segment for default messenger
+     *
+     * @param Request $request PSR7 Request
+     *
+     * @return Aura\Session\SegmentInterface
+     *
+     * @access protected
+     */
+    protected function getMessageSegment(Request $request)
+    {
+        return $this->getSession($request)
+            ->getSegment($this->getMessageSegmentName());
+    }
+
+    /**
+     * Create a new default messenger from the message segment
+     *
+     * @param Request $request PSR7 Request
+     *
+     * @return Messenger
+     *
+     * @access protected
+     */
+    protected function newMessenger(Request $request)
+    {
+        $factory = $this->getMessengerFactory();
+        $segment = $this->getMessageSegment($request);
+        return $factory($segment);
+    }
+
+    /**
+     * Create a messenger, default messenger factory
+     *
+     * @param Segment $segment session segment
+     *
+     * @return Messenger
+     *
+     * @access protected
+     */
+    protected function messengerFactory(Segment $segment)
+    {
+        return new Messenger($segment);
     }
 }

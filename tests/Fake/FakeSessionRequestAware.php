@@ -9,13 +9,8 @@ class FakeSessionRequestAware
 {
     use SessionRequestAwareTrait;
 
-    public function proxyGetSession($request)
+    public function __call($name, $args)
     {
-        return $this->getSession($request);
-    }
-
-    public function proxyGetCsrfSpec($request)
-    {
-        return $this->getCsrfSpec($request);
+        return call_user_func_array([$this, $name], $args);
     }
 }
