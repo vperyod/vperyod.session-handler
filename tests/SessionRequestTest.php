@@ -10,8 +10,6 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
 {
     use SessionTestTrait;
 
-    protected $session;
-
     protected $request;
 
     protected $fake;
@@ -99,10 +97,10 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
     public function testMessageSegment()
     {
         $this->mockSession();
-        $this->mockSegment();
+        $this->mockMessages();
 
         $this->assertSame(
-            $this->segment,
+            $this->messages,
             $this->fake->getMessageSegment($this->request)
         );
     }
@@ -110,7 +108,7 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
     public function testDefaultFactory()
     {
         $this->mockSession();
-        $this->mockSegment();
+        $this->mockMessages();
 
         $this->assertTrue(is_callable($this->fake->getMessengerFactory()));
 
@@ -123,12 +121,12 @@ class SessionRequestTest extends \PHPUnit_Framework_TestCase
     public function testMessengerFactory()
     {
         $this->mockSession();
-        $this->mockSegment();
+        $this->mockMessages();
 
         $factory = $this->getMock(\stdClass::class, ['__invoke']);
         $factory->expects($this->once())
             ->method('__invoke')
-            ->with($this->segment)
+            ->with($this->messages)
             ->will($this->returnValue('foo'));
 
         $this->assertSame(
