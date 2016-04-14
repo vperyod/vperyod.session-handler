@@ -36,12 +36,15 @@ class MessengerTest extends \PHPUnit_Framework_TestCase
     public function expectMessage($msg, $lvl)
     {
         $this->segment->expects($this->once())
-            ->method('addFlash')
+            ->method('setFlash')
             ->with(
+                $this->equalTo('messages'),
                 $this->equalTo(
                     [
-                        'message' => $msg,
-                        'level'   => $lvl
+                        [
+                            'message' => $msg,
+                            'level'   => $lvl
+                        ]
                     ]
                 )
             );
@@ -62,7 +65,8 @@ class MessengerTest extends \PHPUnit_Framework_TestCase
     public function testGet()
     {
         $this->segment->expects($this->once())
-            ->method('getAllCurrentFlash')
+            ->method('getFlash')
+            ->with($this->equalTo('messages'))
             ->will($this->returnValue('foo'));
 
         $this->assertEquals(

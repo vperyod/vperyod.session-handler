@@ -9,15 +9,9 @@
             "email": "jake@jakejohns.net"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/jakejohns/Aura.Session"
-        }
-    ],
     "require": {
         "psr/http-message": "^1.0",
-        "aura/session": "dev-feature/3x-flash-all"
+        "aura/session": "^2.0"
     },
     "require-dev":{
         "zendframework/zend-diactoros": "~1.0"
@@ -31,6 +25,5 @@
         "psr-4": {
             "Vperyod\\SessionHandler\\":"tests/"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }

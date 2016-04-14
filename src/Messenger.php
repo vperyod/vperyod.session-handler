@@ -72,12 +72,14 @@ class Messenger
      */
     public function add($message, $level = self::LVL_INFO)
     {
-        $this->segment->addFlash(
-            [
-                'message' => $message,
-                'level'   => $level
-            ]
-        );
+        $current = $this->segment->getFlash('messages', []);
+
+        $current[] = [
+            'message' => $message,
+            'level'   => $level
+        ];
+
+        $this->segment->setFlash('messages', $current);
 
         return $this;
     }
@@ -91,7 +93,7 @@ class Messenger
      */
     public function getMessages()
     {
-        return $this->segment->getAllCurrentFlash();
+        return $this->segment->getFlash('messages');
     }
 
     /**
