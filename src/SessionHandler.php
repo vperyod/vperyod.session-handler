@@ -31,7 +31,7 @@ use Psr\Http\Message\ResponseInterface as Response;
  * @package  Vperyod\SessionHandler
  * @author   Jake Johns <jake@jakejohns.net>
  * @license  http://jnj.mit-license.org/2016 MIT License
- * @link     https://github.com/vperyod/vperyod.molniya
+ * @link     https://github.com/vperyod/vperyod.session-handler
  */
 class SessionHandler
 {
@@ -72,7 +72,7 @@ class SessionHandler
     public function __invoke(Request $request, Response $response, callable $next)
     {
         $request = $request->withAttribute(
-            $this->sessionAttribute,
+            $this->getSessionAttribute(),
             $this->sessionFactory->newInstance($request->getCookieParams())
         );
         return $next($request, $response);

@@ -25,6 +25,5 @@
         "psr-4": {
             "Vperyod\\SessionHandler\\":"tests/"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }
