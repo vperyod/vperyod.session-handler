@@ -28,7 +28,6 @@ class SessionHandlerTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($this->session));
 
         $handler = new SessionHandler($factory);
-        $handler->setSessionAttribute('session');
 
         $handler(
             ServerRequestFactory::fromGlobals()->withCookieParams($cookie),
@@ -41,7 +40,7 @@ class SessionHandlerTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertSame(
             $this->session,
-            $request->getAttribute('session')
+            $request->getAttribute(SessionHandler::SESSION_ATTRIBUTE)
         );
 
         return $response;

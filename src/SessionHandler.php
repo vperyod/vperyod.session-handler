@@ -19,10 +19,9 @@
 
 namespace Vperyod\SessionHandler;
 
-use Aura\Session\SessionFactory;
-
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Aura\Session;
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * SessionHandler
@@ -35,12 +34,12 @@ use Psr\Http\Message\ResponseInterface as Response;
  */
 class SessionHandler
 {
-    use SessionRequestAwareTrait;
+    const SESSION_ATTRIBUTE = Session\Session::class;
 
     /**
      * Session factory
      *
-     * @var SessionFactory
+     * @var Session\SessionFactory
      *
      * @access protected
      */
@@ -53,9 +52,9 @@ class SessionHandler
      *
      * @access public
      */
-    public function __construct(SessionFactory $sessionFactory = null)
+    public function __construct(Session\SessionFactory $sessionFactory = null)
     {
-        $this->sessionFactory = $sessionFactory ?: new SessionFactory();
+        $this->sessionFactory = $sessionFactory ?: new Session\SessionFactory();
     }
 
     /**
@@ -71,10 +70,24 @@ class SessionHandler
      */
     public function __invoke(Request $request, Response $response, callable $next)
     {
-        $request = $request->withAttribute(
-            $this->getSessionAttribute(),
-            $this->sessionFactory->newInstance($request->getCookieParams())
-        );
+        $session = $this->newSession($request);
+        $request = $request->withAttribute(self::SESSION_ATTRIBUTE, $session);
         return $next($request, $response);
+    }
+
+    /**
+     * Create new session
+     *
+     * @param Request $request PSR7 Request
+     *
+     * @return Session\Session
+     *
+     * @access protected
+     */
+    protected function newSession(Request $request)
+    {
+        $factory = $this->sessionFactory;
+        $cookie  = $request->getCookieParams();
+        return $factory->newInstance($cookie);
     }
 }

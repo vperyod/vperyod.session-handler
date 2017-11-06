@@ -137,7 +137,7 @@ $this->input($this->csrf);
 [Aura\Session]: https://github.com/auraphp/Aura.Session
 
 [ico-version]: https://img.shields.io/packagist/v/vperyod/session-handler.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/vperyod/vperyod.session-handler/master.svg?style=flat-square
+[ico-travis]: https://img.shields.io/travis/vperyod/vperyod.session-handler/develop.svg?style=flat-square
 [ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/vperyod/vperyod.session-handler.svg?style=flat-square
 [ico-code-quality]: https://img.shields.io/scrutinizer/g/vperyod/vperyod.session-handler.svg?style=flat-square
 
