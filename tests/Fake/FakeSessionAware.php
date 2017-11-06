@@ -3,11 +3,11 @@
 
 namespace Vperyod\SessionHandler\Fake;
 
-use Vperyod\SessionHandler\SessionRequestAwareTrait;
+use Vperyod\SessionHandler\SessionAwareTrait;
 
-class FakeSessionRequestAware
+class FakeSessionAware
 {
-    use SessionRequestAwareTrait;
+    use SessionAwareTrait;
 
     public function __call($name, $args)
     {

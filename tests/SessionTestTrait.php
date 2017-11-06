@@ -20,19 +20,6 @@ trait SessionTestTrait
             ->getMock();
 
         $this->request = ServerRequestFactory::fromGlobals()
-            ->withAttribute('aura/session:session', $this->session);
+            ->withAttribute(SessionHandler::SESSION_ATTRIBUTE, $this->session);
     }
-
-    public function mockMessages()
-    {
-        $this->messages = $this->getMockBuilder('Aura\Session\Segment')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->session->expects($this->once())
-            ->method('getSegment')
-            ->with($this->equalTo('vperyod/session-handler:messages'))
-            ->will($this->returnValue($this->messages));
-    }
-
 }
